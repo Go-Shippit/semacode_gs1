@@ -21,6 +21,6 @@
 #define MAXBARCODE 3116
 
 unsigned char *
-iec16022ecc200 (int *Wptr, int *Hptr, char **encodingptr, int barcodelen, unsigned char *barcode, int *lenp,int *maxp,int *eccp);
+iec16022ecc200_gs1 (int *Wptr, int *Hptr, char **encodingptr, int barcodelen, unsigned char *barcode, int *lenp,int *maxp,int *eccp);
 
-void iec16022init(int *Wptr, int *Hptr, const char *barcode);
+void iec16022init_gs1(int *Wptr, int *Hptr, const char *barcode);

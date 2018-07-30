@@ -1,5 +1,5 @@
-require 'mkmf' 
-dir_config 'semacode_native'
+require 'mkmf'
+dir_config 'semacode_gs1_native'
 if CONFIG['CC'] =~ /gcc/
   $CFLAGS << ' ' + %w[
     -Wno-sign-compare -Wno-pointer-sign
@@ -8,4 +8,4 @@ if CONFIG['CC'] =~ /gcc/
     -Wno-format-extra-args -Wno-char-subscripts
   ].join(' ').strip
 end
-create_makefile 'semacode_native'
+create_makefile 'semacode_gs1_native'

@@ -27,8 +27,8 @@
 #include <string.h>
 #include <time.h>
 #include "ruby.h"
-#include "reedsol.h"
-#include "iec16022ecc200.h"
+#include "reedsol_gs1.h"
+#include "iec16022ecc200_gs1.h"
 
 static struct ecc200matrix_s
 {
@@ -211,8 +211,8 @@ static void
 ecc200 (unsigned char *binary, int bytes, int datablock, int rsblock)
 {
    int blocks = (bytes + 2) / datablock, b;
-   rs_init_gf (0x12d);
-   rs_init_code (rsblock, 1);
+   rs_gs1_init_gf (0x12d);
+   rs_gs1_init_code (rsblock, 1);
    for (b = 0; b < blocks; b++)
    {
       unsigned char buf[256],
@@ -221,7 +221,7 @@ ecc200 (unsigned char *binary, int bytes, int datablock, int rsblock)
         p = 0;
       for (n = b; n < bytes; n += blocks)
          buf[p++] = binary[n];
-      rs_encode (p, buf, ecc);
+      rs_gs1_encode (p, buf, ecc);
       p = rsblock - 1;          // comes back reversed
       for (n = b; n < rsblock * blocks; n += blocks)
          binary[bytes + n] = ecc[p--];
@@ -457,7 +457,7 @@ ecc200encode (unsigned char *t, int tl, unsigned char *s, int sl, char *encoding
    if (tp > tl || sp < sl)
       return 0;                 // did not fit
    //for (tp = 0; tp < tl; tp++) rb_raise(rb_eRuntimeError,  "%02X ", t[tp]); rb_raise(rb_eRuntimeError,  "\n");
-   return 1;                    // OK 
+   return 1;                    // OK
 }
 
 // Auto encoding format functions
@@ -777,15 +777,15 @@ encmake (int l, unsigned char *s, int *lenp, char exact)
    return encoding;
 }
 
-void iec16022init(int *Wptr, int *Hptr, const char *barcode)
+void iec16022init_gs1(int *Wptr, int *Hptr, const char *barcode)
 {
 	if(Wptr == NULL || Hptr == NULL || barcode == NULL) return;
-	
+
 	int barcodelen = strlen(barcode) + 1;
 	struct ecc200matrix_s *matrix;
 	for (matrix = ecc200matrix; matrix->bytes < barcodelen; matrix++);
 	*Wptr = matrix->W;
-	*Hptr = matrix->H;	
+	*Hptr = matrix->H;
 }
 
 // Main encoding function
@@ -798,10 +798,10 @@ void iec16022init(int *Wptr, int *Hptr, const char *barcode)
 // If eccp not null, then the number of ecc bytes used in this size is stored
 // Returns 0 on error (writes to stderr with details).
 unsigned char *
-iec16022ecc200 (int *Wptr, int *Hptr, char **encodingptr, int barcodelen, unsigned char *barcode, int *lenp, int *maxp, int *eccp)
+iec16022ecc200_gs1 (int *Wptr, int *Hptr, char **encodingptr, int barcodelen, unsigned char *barcode, int *lenp, int *maxp, int *eccp)
 {
   // GS
-  // max semacode size is 3116 (from iec16022ecc200.h)
+  // max semacode size is 3116 (from iec16022ecc200_gs1.h)
   // we over compensate and check that the input is within this length
   // to avoid any buffer overflow conditions.
    unsigned char binary[4096];  // encoded raw data and ecc to place in barcode
@@ -810,18 +810,18 @@ iec16022ecc200 (int *Wptr, int *Hptr, char **encodingptr, int barcodelen, unsign
    char *encoding = 0;
    unsigned char *grid = 0;
    struct ecc200matrix_s *matrix;
-   
+
    // GS
    // using the length from the 144x144 semacode in the matrix
    // I don't trust the 3116 maximum length value ... and
    // besides how many characters do you really need in a
    // semacode?
-   
+
    if(barcodelen > 1556) {
      rb_raise(rb_eRangeError,  "barcode is too long (> 1556 chars)");
      return NULL;
    }
-   
+
    memset (binary, 0, sizeof (binary));
    if (encodingptr)
       encoding = *encodingptr;
