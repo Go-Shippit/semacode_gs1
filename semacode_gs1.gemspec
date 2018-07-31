@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'semacode_gs1'
-  s.version = '0.8.1'
+  s.version = '0.8.2'
   s.author = 'Guido Sohne'
   s.email = 'guido@sohne.net'
   s.homepage = 'http://sohne.net/projects/semafox/'
