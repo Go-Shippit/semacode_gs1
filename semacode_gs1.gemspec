@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'semacode_gs1'
-  s.version = '0.8.2'
+  s.version = '0.8.3'
   s.author = 'Guido Sohne'
   s.email = 'guido@sohne.net'
   s.homepage = 'http://sohne.net/projects/semafox/'
@@ -15,7 +15,8 @@ Gem::Specification.new do |s|
   use.
 
   This version replaces the first byte in the output with the <F1> character used
-  by GS1 barcodes.
+  by GS1 barcodes. It has also been modified to be able to run alongside the
+  original semacode gem by namespacing everything with _gs1.
 DESC
 
   s.extensions << 'ext/extconf.rb'

@@ -1,4 +1,12 @@
 *.o
+*.so
 *.bundle
 tags
 Makefile
+.sitearchdir.time
+*.log
+*.bak
+*.swp
+Gemfile.lock
+.DS_Store
+**/.DS_Store
