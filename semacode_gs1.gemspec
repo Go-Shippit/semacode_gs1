@@ -1,12 +1,11 @@
 Gem::Specification.new do |s|
-  s.name = 'semacode-gs1'
-  s.version = '0.7.6'
+  s.name = 'semacode_gs1'
+  s.version = '0.8.3'
   s.author = 'Guido Sohne'
   s.email = 'guido@sohne.net'
   s.homepage = 'http://sohne.net/projects/semafox/'
   s.platform = Gem::Platform::RUBY
   s.summary = 'Create semacodes (2D barcodes) using Ruby.'
-  s.rubyforge_project = 'semacode'
   s.description = <<DESC
   This Ruby extension implements a DataMatrix encoder for Ruby. It is typically
   used to create semacodes, which are barcodes, that contain URLs. This encoder
@@ -16,7 +15,8 @@ Gem::Specification.new do |s|
   use.
 
   This version replaces the first byte in the output with the <F1> character used
-  by GS1 barcodes.
+  by GS1 barcodes. It has also been modified to be able to run alongside the
+  original semacode gem by namespacing everything with _gs1.
 DESC
 
   s.extensions << 'ext/extconf.rb'
@@ -30,7 +30,7 @@ DESC
     'CHANGELOG',
     'Rakefile']
   s.require_path = 'lib'
-  s.autorequire = 'semacode'
+  s.autorequire = 'semacode_gs1'
   s.test_files = Dir['{tests}/**/*test.rb']
   s.has_rdoc = true
   s.extra_rdoc_files = ['README']

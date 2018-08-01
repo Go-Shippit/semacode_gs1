@@ -15,7 +15,7 @@
 */
 
 #include "ruby.h"
-#include "semacode.h"
+#include "semacode_gs1.h"
 #include <string.h>
 
 /*
@@ -36,8 +36,8 @@ Due to a bug in the underlying encoder, we do two things
    be found
 
 */
-semacode_t*
-encode_string(semacode_t *semacode, int message_length, char *message, int encoding_length, char *encoding)
+semacode_gs1_t*
+encode_string_gs1(semacode_gs1_t *semacode, int message_length, char *message, int encoding_length, char *encoding)
 {
   /* avoid obvious bad cases */
   if(semacode == NULL || message == NULL || message_length < 1) {
@@ -52,7 +52,7 @@ encode_string(semacode_t *semacode, int message_length, char *message, int encod
   if(semacode->encoding != NULL)
     free(semacode->encoding);
 
-  bzero(semacode, sizeof(semacode_t));
+  bzero(semacode, sizeof(semacode_gs1_t));
 
   if (encoding_length > 0) {
     // don't free ruby strings
@@ -67,10 +67,10 @@ encode_string(semacode_t *semacode, int message_length, char *message, int encod
   strcat(msg, " ");
 
   // choose the best grid that will hold our message
-  iec16022init(&semacode->width, &semacode->height, msg);
+  iec16022init_gs1(&semacode->width, &semacode->height, msg);
 
   // encode the actual data
-  semacode->data = (char *) iec16022ecc200(
+  semacode->data = (char *) iec16022ecc200_gs1(
     &semacode->width,
     &semacode->height,
     &semacode->encoding,
@@ -91,13 +91,13 @@ static VALUE rb_mSemacode;
 static VALUE rb_cEncoder;
 
 static void
-semacode_mark(semacode_t *semacode)
+semacode_gs1_mark(semacode_gs1_t *semacode)
 {
   /* need this if we ever hold any other Ruby objects. so let's not go there. */
 }
 
 static void
-semacode_free(semacode_t *semacode)
+semacode_gs1_free(semacode_gs1_t *semacode)
 {
   if(semacode != NULL) {
     if(semacode->data != NULL)
@@ -110,10 +110,10 @@ semacode_free(semacode_t *semacode)
 }
 
 static VALUE
-semacode_allocate(VALUE klass)
+semacode_gs1_allocate(VALUE klass)
 {
-  semacode_t *semacode;
-  return Data_Make_Struct(klass, semacode_t, semacode_mark, semacode_free, semacode);
+  semacode_gs1_t *semacode;
+  return Data_Make_Struct(klass, semacode_gs1_t, semacode_gs1_mark, semacode_gs1_free, semacode);
 }
 
 /*
@@ -129,9 +129,9 @@ semacode_allocate(VALUE klass)
 
 */
 static VALUE
-semacode_init(int argc, VALUE* argv, VALUE self)
+semacode_gs1_init(int argc, VALUE* argv, VALUE self)
 {
-  semacode_t *semacode;
+  semacode_gs1_t *semacode;
   VALUE message, encoding;
   rb_scan_args(argc, argv, "11", &message, &encoding);
 
@@ -141,8 +141,8 @@ semacode_init(int argc, VALUE* argv, VALUE self)
   if (!rb_respond_to(message, rb_intern ("to_s")))
       rb_raise(rb_eRuntimeError, "target must respond to 'to_s'");
 
-  Data_Get_Struct(self, semacode_t, semacode);
-  encode_string(semacode, StringValueLen(message), StringValuePtr(message), StringValueLen(encoding), StringValuePtr(encoding));
+  Data_Get_Struct(self, semacode_gs1_t, semacode);
+  encode_string_gs1(semacode, StringValueLen(message), StringValuePtr(message), StringValueLen(encoding), StringValuePtr(encoding));
 
   return self;
 }
@@ -160,7 +160,7 @@ semacode_init(int argc, VALUE* argv, VALUE self)
 
 */
 static VALUE
-semacode_grid(semacode_t *semacode)
+semacode_gs1_grid(semacode_gs1_t *semacode)
 {
   int w = semacode->width;
   int h = semacode->height;
@@ -196,14 +196,14 @@ semacode_grid(semacode_t *semacode)
 
 */
 static VALUE
-semacode_to_s(VALUE self)
+semacode_gs1_to_s(VALUE self)
 {
-  semacode_t *semacode;
+  semacode_gs1_t *semacode;
   VALUE str;
   int x, y;
   int w, h;
 
-  Data_Get_Struct(self, semacode_t, semacode);
+  Data_Get_Struct(self, semacode_gs1_t, semacode);
 
   if(semacode == NULL || semacode->data == NULL)
     return Qnil;
@@ -240,14 +240,14 @@ semacode_to_s(VALUE self)
 
 */
 static VALUE
-semacode_encode(VALUE self, VALUE message, VALUE encoding)
+semacode_gs1_encode(VALUE self, VALUE message, VALUE encoding)
 {
-  semacode_t *semacode;
+  semacode_gs1_t *semacode;
 
   if (!rb_respond_to(message, rb_intern ("to_s")))
       rb_raise(rb_eRuntimeError, "target must respond to 'to_s'");
 
-  Data_Get_Struct(self, semacode_t, semacode);
+  Data_Get_Struct(self, semacode_gs1_t, semacode);
 
   /* free previous string if that exists */
   if(semacode->data != NULL) {
@@ -256,9 +256,9 @@ semacode_encode(VALUE self, VALUE message, VALUE encoding)
   }
 
   /* do a new encoding */
-  DATA_PTR(self) = encode_string(semacode, StringValueLen(message), StringValuePtr(message), StringValueLen(encoding), StringValuePtr(encoding));
+  DATA_PTR(self) = encode_string_gs1(semacode, StringValueLen(message), StringValuePtr(message), StringValueLen(encoding), StringValuePtr(encoding));
 
-  return semacode_grid(semacode);
+  return semacode_gs1_grid(semacode);
 }
 
 /*
@@ -273,25 +273,25 @@ semacode_encode(VALUE self, VALUE message, VALUE encoding)
 
 */
 static VALUE
-semacode_data(VALUE self)
+semacode_gs1_data(VALUE self)
 {
-  semacode_t *semacode;
-  Data_Get_Struct(self, semacode_t, semacode);
+  semacode_gs1_t *semacode;
+  Data_Get_Struct(self, semacode_gs1_t, semacode);
 
   if(semacode->data == NULL)
     return Qnil;
   else
-    return semacode_grid(semacode);
+    return semacode_gs1_grid(semacode);
 }
 
 /*
   This returns the encoding string used to create the semacode.
 */
 static VALUE
-semacode_encoded(VALUE self)
+semacode_gs1_encoded(VALUE self)
 {
-  semacode_t *semacode;
-  Data_Get_Struct(self, semacode_t, semacode);
+  semacode_gs1_t *semacode;
+  Data_Get_Struct(self, semacode_gs1_t, semacode);
 
   return rb_str_new2(semacode->encoding);
 }
@@ -300,10 +300,10 @@ semacode_encoded(VALUE self)
   This returns the width of the semacode.
 */
 static VALUE
-semacode_width(VALUE self)
+semacode_gs1_width(VALUE self)
 {
-  semacode_t *semacode;
-  Data_Get_Struct(self, semacode_t, semacode);
+  semacode_gs1_t *semacode;
+  Data_Get_Struct(self, semacode_gs1_t, semacode);
 
   return INT2FIX(semacode->width);
 }
@@ -312,10 +312,10 @@ semacode_width(VALUE self)
   This returns the height of the semacode.
 */
 static VALUE
-semacode_height(VALUE self)
+semacode_gs1_height(VALUE self)
 {
-  semacode_t *semacode;
-  Data_Get_Struct(self, semacode_t, semacode);
+  semacode_gs1_t *semacode;
+  Data_Get_Struct(self, semacode_gs1_t, semacode);
 
   return INT2FIX(semacode->height);
 }
@@ -325,10 +325,10 @@ semacode_height(VALUE self)
   the same as the product of the height and the width.
 */
 static VALUE
-semacode_length(VALUE self)
+semacode_gs1_length(VALUE self)
 {
-  semacode_t *semacode;
-  Data_Get_Struct(self, semacode_t, semacode);
+  semacode_gs1_t *semacode;
+  Data_Get_Struct(self, semacode_gs1_t, semacode);
 
   return INT2FIX(semacode->height * semacode->width);
 }
@@ -339,10 +339,10 @@ semacode_length(VALUE self)
   or any other operations on the raw encoding.
 */
 static VALUE
-semacode_raw_encoded_length(VALUE self)
+semacode_gs1_raw_encoded_length(VALUE self)
 {
-  semacode_t *semacode;
-  Data_Get_Struct(self, semacode_t, semacode);
+  semacode_gs1_t *semacode;
+  Data_Get_Struct(self, semacode_gs1_t, semacode);
 
   return INT2FIX(semacode->raw_encoded_length);
 }
@@ -354,10 +354,10 @@ semacode_raw_encoded_length(VALUE self)
   information while keeping the symbol size the same.
 */
 static VALUE
-semacode_symbol_size(VALUE self)
+semacode_gs1_symbol_size(VALUE self)
 {
-  semacode_t *semacode;
-  Data_Get_Struct(self, semacode_t, semacode);
+  semacode_gs1_t *semacode;
+  Data_Get_Struct(self, semacode_gs1_t, semacode);
 
   return INT2FIX(semacode->symbol_capacity);
 }
@@ -367,34 +367,34 @@ semacode_symbol_size(VALUE self)
   error correction.
 */
 static VALUE
-semacode_ecc_bytes(VALUE self)
+semacode_gs1_ecc_bytes(VALUE self)
 {
-  semacode_t *semacode;
-  Data_Get_Struct(self, semacode_t, semacode);
+  semacode_gs1_t *semacode;
+  Data_Get_Struct(self, semacode_gs1_t, semacode);
 
   return INT2FIX(semacode->ecc_bytes);
 }
 
 void
-Init_semacode_native()
+Init_semacode_gs1_native()
 {
   rb_mSemacode = rb_define_module ("DataMatrix");
-  rb_cEncoder = rb_define_class_under(rb_mSemacode, "Encoder", rb_cObject);
+  rb_cEncoder = rb_define_class_under(rb_mSemacode, "EncoderGs1", rb_cObject);
 
-  rb_define_alloc_func(rb_cEncoder, semacode_allocate);
+  rb_define_alloc_func(rb_cEncoder, semacode_gs1_allocate);
 
-  rb_define_method(rb_cEncoder, "initialize", semacode_init, -1);
-  rb_define_method(rb_cEncoder, "encode", semacode_encode, 2);
-  rb_define_method(rb_cEncoder, "to_a", semacode_data, 0);
-  rb_define_method(rb_cEncoder, "data", semacode_data, 0);
-  rb_define_method(rb_cEncoder, "encoding", semacode_encoded, 0);
-  rb_define_method(rb_cEncoder, "to_s", semacode_to_s, 0);
-  rb_define_method(rb_cEncoder, "to_str", semacode_to_s, 0);
-  rb_define_method(rb_cEncoder, "width", semacode_width, 0);
-  rb_define_method(rb_cEncoder, "height", semacode_height, 0);
-  rb_define_method(rb_cEncoder, "length", semacode_length, 0);
-  rb_define_method(rb_cEncoder, "size", semacode_length, 0);
-  rb_define_method(rb_cEncoder, "raw_encoded_length", semacode_raw_encoded_length, 0);
-  rb_define_method(rb_cEncoder, "symbol_size", semacode_symbol_size, 0);
-  rb_define_method(rb_cEncoder, "ecc_bytes", semacode_ecc_bytes, 0);
+  rb_define_method(rb_cEncoder, "initialize", semacode_gs1_init, -1);
+  rb_define_method(rb_cEncoder, "encode", semacode_gs1_encode, 2);
+  rb_define_method(rb_cEncoder, "to_a", semacode_gs1_data, 0);
+  rb_define_method(rb_cEncoder, "data", semacode_gs1_data, 0);
+  rb_define_method(rb_cEncoder, "encoding", semacode_gs1_encoded, 0);
+  rb_define_method(rb_cEncoder, "to_s", semacode_gs1_to_s, 0);
+  rb_define_method(rb_cEncoder, "to_str", semacode_gs1_to_s, 0);
+  rb_define_method(rb_cEncoder, "width", semacode_gs1_width, 0);
+  rb_define_method(rb_cEncoder, "height", semacode_gs1_height, 0);
+  rb_define_method(rb_cEncoder, "length", semacode_gs1_length, 0);
+  rb_define_method(rb_cEncoder, "size", semacode_gs1_length, 0);
+  rb_define_method(rb_cEncoder, "raw_encoded_length", semacode_gs1_raw_encoded_length, 0);
+  rb_define_method(rb_cEncoder, "symbol_size", semacode_gs1_symbol_size, 0);
+  rb_define_method(rb_cEncoder, "ecc_bytes", semacode_gs1_ecc_bytes, 0);
 }

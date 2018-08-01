@@ -10,12 +10,12 @@
 // <Some notes on the theory and implementation need to be added here>
 
 // Usage:
-// First call rs_init_gf(poly) to set up the Galois Field parameters.
-// Then  call rs_init_code(size, index) to set the encoding size
-// Then  call rs_encode(datasize, data, out) to encode the data.
+// First call rs_gs1_init_gf(poly) to set up the Galois Field parameters.
+// Then  call rs_gs1_init_code(size, index) to set the encoding size
+// Then  call rs_gs1_encode(datasize, data, out) to encode the data.
 //
 // These can be called repeatedly as required - but note that
-// rs_init_code must be called following any rs_init_gf call.
+// rs_gs1_init_code must be called following any rs_gs1_init_gf call.
 //
 // If the parameters are fixed, some of the statics below can be
 // replaced with constants in the obvious way, and additionally
@@ -34,7 +34,7 @@ static int *log = NULL,
    *alog = NULL,
    *rspoly = NULL;
 
-// rs_init_gf(poly) initialises the parameters for the Galois Field.
+// rs_gs1_init_gf(poly) initialises the parameters for the Galois Field.
 // The symbol size is determined from the highest bit set in poly
 // This implementation will support sizes up to 30 bits (though that
 // will result in very large log/antilog tables) - bit sizes of
@@ -45,7 +45,7 @@ static int *log = NULL,
 // a**8 + a**5 + a**3 + a**2 + 1, which translates to 0x12d.
 
 void
-rs_init_gf (int poly)
+rs_gs1_init_gf (int poly)
 {
    int m,
      b,
@@ -83,7 +83,7 @@ rs_init_gf (int poly)
    }
 }
 
-// rs_init_code(nsym, index) initialises the Reed-Solomon encoder
+// rs_gs1_init_code(nsym, index) initialises the Reed-Solomon encoder
 // nsym is the number of symbols to be generated (to be appended
 // to the input data).  index is usually 1 - it is the index of
 // the constant in the first term (i) of the RS generator polynomial:
@@ -91,7 +91,7 @@ rs_init_gf (int poly)
 // For ECC200, index is 1.
 
 void
-rs_init_code (int nsym, int index)
+rs_gs1_init_code (int nsym, int index)
 {
    int i,
      k;
@@ -122,7 +122,7 @@ rs_init_code (int nsym, int index)
 // to unsigned int * for larger symbols.
 
 void
-rs_encode (int len, unsigned char *data, unsigned char *res)
+rs_gs1_encode (int len, unsigned char *data, unsigned char *res)
 {
    int i,
      k,
@@ -156,10 +156,10 @@ main (void)
    unsigned char data[9] = { 142, 164, 186 };
    unsigned char out[5];
 
-   rs_init_gf (0x12d);
-   rs_init_code (5, 1);
+   rs_gs1_init_gf (0x12d);
+   rs_gs1_init_code (5, 1);
 
-   rs_encode (3, data, out);
+   rs_gs1_encode (3, data, out);
 
    printf ("Result of Annexe R encoding:\n");
    for (i = 4; i >= 0; i--)

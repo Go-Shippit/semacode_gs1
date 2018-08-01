@@ -2,9 +2,9 @@
 #define _SEMACODE_H
 
 #include <strings.h>
-#include "iec16022ecc200.h"
+#include "iec16022ecc200_gs1.h"
 
-typedef struct semacode_t {
+typedef struct semacode_gs1_t {
   int width;
   int height;
   int raw_encoded_length;
@@ -12,7 +12,7 @@ typedef struct semacode_t {
   int ecc_bytes;
   char *encoding;
   char *data;
-} semacode_t;
+} semacode_gs1_t;
 
 #ifndef RB_STRING_VALUE
 #define RB_STRING_VALUE(s) (TYPE(s) == T_STRING ? (s) : (*(volatile VALUE *)&(s) = rb_str_to_str(s)))
